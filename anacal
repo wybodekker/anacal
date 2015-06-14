@@ -1,6 +1,6 @@
 #!/bin/bash
 
- version=1.00
+ version=1.01
   myname=anacal
 
 read -r -d '' doc \
@@ -52,7 +52,7 @@ Author	Wybo Dekker
 Email	U{wybo@dekkerdocumenten.nl}{wybo@dekkerdocumenten.nl}
 License	Released under the U{www.gnu.org/copyleft/gpl.html}{GNU General Public License}
 DOC
-doc=$(sed '1s/^/\\n/;s/$/\\n\\/;$s/\\$//' <<<"$doc") # first \n ensures newline in binary
+doc=$(sed 's/$/\\n\\/;$s/\\$//' <<<"$doc")
 
    help() { sed -n '/^= Synopsis/,/^= /p' $0|sed '1s/.*/Usage:/;/^= /d'; exit; }
 version() { echo $version; exit; }
@@ -131,8 +131,8 @@ char temp[80];
 int comp_nr=0; /* counts compositions (just for printing references in the tables) */
 
 void help() {
-   fprintf(stderr,"$doc");
-   exit(1);
+   fprintf(stdout,"$doc");
+   exit(0);
 }
 
 int detsol(float **a, int n, float *b) {
