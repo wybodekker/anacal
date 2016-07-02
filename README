@@ -4,13 +4,13 @@
    type:| C
  author:| Wybo Dekker
   email:| wybo@dekkerdocumenten.nl
-version:| 1.01
-license:| Released under the GNU General Public License
+version:| 1.02
+license:| GNU General Public License
 
 Given, for a chemical composition:
 - the elemental percentages for (some of the) elements and
 - a set of bruto formulae, one for each possible component
 anacal calculates compositions with one or more of the formula's
-resulting in a good (i.e. better than a certain standard deviation) fit
+resulting in a good (that is: better than a certain standard deviation) fit
 between calculated and experimental element percentages.
 

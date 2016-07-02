@@ -1,24 +1,25 @@
 #!/bin/bash
 
- version=1.01
-  myname=anacal
+ Version=1.02
+  Myname=anacal
 
 read -r -d '' doc \
 <<'DOC'
 = anacal - calculation of chemical composition from elemental analysis results
 = Synopsis
-anacal [options] file [max_dev]	
-Options:
+anacal [options] file[.ea] [max_dev]	
+== Options
 -s	use the short format
 -w	in the short format, report weight instead of mole fractions
 -h	prints this help
+-H	prints full documentation
 
 = Description
 Given, for a chemical composition:
 - the elemental percentages for (some of the) elements and
 - a set of bruto formulae, one for each possible component 
 anacal calculates compositions with one or more of the formula's
-resulting in a good (i.e. better than a certain standard deviation) fit
+resulting in a good (that is: better than a certain standard deviation) fit
 between calculated and experimental element percentages. 
 
 Input is taken from |file.ea|, output is written to |stdout|.
@@ -32,7 +33,7 @@ numbers):
 1	a title line
 2	elementsymbol followed by percentage for each element determined
 3+	bruto formula's of the possible components, one per line;
-	comments may be added with the #-character:
+	comments may be added with the #-character;
 	remaining characters up to end-of-line are skipped.
 
 Sample input file (case sensitive):
@@ -47,30 +48,31 @@ Sample input file (case sensitive):
    H Cl	#hydrochloric acid
    H2 O	#water
 
-= Author and copyright
-Author	Wybo Dekker
-Email	U{wybo@dekkerdocumenten.nl}{wybo@dekkerdocumenten.nl}
-License	Released under the U{www.gnu.org/copyleft/gpl.html}{GNU General Public License}
+= Author
+[Wybo Dekker](wybo@dekkerdocumenten.nl)
+
+= Copyright
+Released under the [GNU General Public License](www.gnu.org/copyleft/gpl.html)
 DOC
+
+# need this contruct to get full doc inside ELF-executable (see helpall function):
 doc=$(sed 's/$/\\n\\/;$s/\\$//' <<<"$doc")
 
-   help() { sed -n '/^= Synopsis/,/^= /p' $0|sed '1s/.*/Usage:/;/^= /d'; exit; }
-version() { echo $version; exit; }
 install() { 
-   rm -f /local/bin/$myname
-   cp $0 /local/bin/$myname
-   chmod 755 /local/bin/$myname
-   gendoc $myname
-   gendoc -p $myname
-   scriptinfo --markdown $myname |sed 's/bash/C/' >README
-   tmp=$(mktemp -d -t $myname-1.XXXXXXXXXX)
-   echo "$source" >$tmp/$myname.c
-   echo "$makefile" >$tmp/Makefile
-   cd $tmp
+   rm -f /local/bin/$Myname
+   cp "$0" /local/bin/$Myname
+   chmod 755 /local/bin/$Myname
+   gendoc $Myname
+   gendoc -m $Myname
+   scriptinfo --markdown $Myname |sed 's/bash/C/' >README
+   tmp=$(mktemp -d -t $Myname-1.XXXXXXXXXX)
+   echo "$source" >"$tmp/$Myname.c"
+   echo "$makefile" >"$tmp/Makefile"
+   cd "$tmp" || die "Could not cd to $tmp"
    make --quiet
-   mv -f $myname /local/bin
-   cd /tmp
-   rm -r $tmp
+   mv -f $Myname /local/bin
+   cd ..
+   rm -r "$tmp"
    exit 
 }
 
@@ -78,7 +80,7 @@ makefile=$(cat <<'MAKEFILE'
 PROG		= anacal
 LIBDIR          = -L$(HOME)/lib 
 INCLUDE		= -I$(HOME)/include
-#LIBS            = -lwybo -lnr -lm 
+# nr: numerical recipes, see http://numerical.recipes
 LIBS            = -lnr -lm 
 CFLAGS          = -g -Dlinux -Wall $(DBXFLAGS) $(INCLUDE)
 LDFLAGS         = $(LIBDIR) $(LIBS)
@@ -131,6 +133,11 @@ char temp[80];
 int comp_nr=0; /* counts compositions (just for printing references in the tables) */
 
 void help() {
+   system("anacal -H|sed -ns '/^= Syno/,/^= Desc/p'|sed '/^=/d'");
+   exit(0);
+}
+
+void helpall() {
    fprintf(stdout,"$doc");
    exit(0);
 }
@@ -222,8 +229,9 @@ int main(int argc, char *argv[]) {
          switch(*optptr) {
             case 's': kort=1; break;
             case 'w': weight=1; break;
-            case 'V': printf("$version\n");exit(0);
+            case 'V': printf("$Version\n");exit(0);
             case 'h': help(); break;
+            case 'H': helpall(); break;
          }
          optptr++;
       }
@@ -504,17 +512,24 @@ L6:
 SOURCE
 )
 
+if [[ $(type -t showxtermcolors) != function ]]; then
+   echo "$Myname needs wdbashfunctions to be sourced in your ~/.bashrc"
+   echo "get those with:"
+   exit 1
+fi
+
 if ! options=$(getopt \
-   -n $myname \
-   -o IhV \
+   -n $Myname \
+   -o IhHV \
    -- "$@"
 ); then exit 1; fi
 eval set -- "$options"
 while [ $# -gt 0 ]; do
    case $1 in
    (-I)  install;;
-   (-V)  version;;
+   (-V)  echo $Version; exit;;
    (-h)  help;;
+   (-H)  helpall;;
    (--)  shift;  break;;
    (*)	         break;;
    esac
