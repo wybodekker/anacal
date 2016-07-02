@@ -1,7 +1,7 @@
 #!/bin/bash
 
  Version=1.02
-  Myname=anacal
+  Myname=${0##*/}
 
 read -r -d '' doc \
 <<'DOC'
@@ -58,7 +58,7 @@ DOC
 # need this contruct to get full doc inside ELF-executable (see helpall function):
 doc=$(sed 's/$/\\n\\/;$s/\\$//' <<<"$doc")
 
-install() { 
+instscr() { 
    rm -f /local/bin/$Myname
    cp "$0" /local/bin/$Myname
    chmod 755 /local/bin/$Myname
@@ -132,7 +132,7 @@ char temp[80];
 
 int comp_nr=0; /* counts compositions (just for printing references in the tables) */
 
-void help() {
+void helpsrt() {
    system("anacal -H|sed -ns '/^= Syno/,/^= Desc/p'|sed '/^=/d'");
    exit(0);
 }
@@ -222,7 +222,7 @@ int main(int argc, char *argv[]) {
    int wid_of_formula_col;
    char *hyphens="---------------------------------------------------------------------------------";
    if (argc<2)
-      help();
+      helpsrt();
    while (argptr[0]=='-') 	// if first argument is an option, like -ws
    { optptr=argptr+1;		// point to the 'w', then the 's'
       while(*optptr) {
@@ -230,7 +230,7 @@ int main(int argc, char *argv[]) {
             case 's': kort=1; break;
             case 'w': weight=1; break;
             case 'V': printf("$Version\n");exit(0);
-            case 'h': help(); break;
+            case 'h': helpsrt(); break;
             case 'H': helpall(); break;
          }
          optptr++;
@@ -255,7 +255,7 @@ int main(int argc, char *argv[]) {
 
    out=stdout;
    if (argc>3)
-      help(); // there must be a one and only one filename plus perhaps a limit
+      helpsrt(); // there must be a one and only one filename plus perhaps a limit
    if (argc==3)
       limit=atof(argv[argn+1]); //sscanf(argptr,"%f",&limit); else limit=1;
    limit/=100;
@@ -526,9 +526,9 @@ if ! options=$(getopt \
 eval set -- "$options"
 while [ $# -gt 0 ]; do
    case $1 in
-   (-I)  install;;
+   (-I)  instscr;;
    (-V)  echo $Version; exit;;
-   (-h)  help;;
+   (-h)  helpsrt;;
    (-H)  helpall;;
    (--)  shift;  break;;
    (*)	         break;;
