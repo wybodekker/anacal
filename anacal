@@ -1,13 +1,15 @@
 #!/bin/bash
 
  Version=1.02
-  Myname=${0##*/}
+  Myname="${0##*/}"
 
 read -r -d '' doc \
 <<'DOC'
 = anacal - calculation of chemical composition from elemental analysis results
+
 = Synopsis
 anacal [options] file[.ea] [max_dev]	
+
 == Options
 -s	use the short format
 -w	in the short format, report weight instead of mole fractions
@@ -55,22 +57,22 @@ Sample input file (case sensitive):
 Released under the [GNU General Public License](www.gnu.org/copyleft/gpl.html)
 DOC
 
-# need this contruct to get full doc inside ELF-executable (see helpall function):
-doc=$(sed 's/$/\\n\\/;$s/\\$//' <<<"$doc")
+# need this construct to get full doc inside ELF-executable (see helpall function):
+doc="\n$(sed 's/$/\\n\\/;$s/\\$//' <<<"$doc")"
 
 instscr() { 
-   rm -f /local/bin/$Myname
-   cp "$0" /local/bin/$Myname
-   chmod 755 /local/bin/$Myname
-   gendoc $Myname
-   gendoc -m $Myname
-   scriptinfo --markdown $Myname |sed 's/bash/C/' >README
-   tmp=$(mktemp -d -t $Myname-1.XXXXXXXXXX)
+   rm -f "/local/bin/$Myname"
+   cp "$0" "/local/bin/$Myname"
+   chmod 755 "/local/bin/$Myname"
+   gendoc "$Myname"
+   gendoc -m "$Myname"
+   scriptinfo --markdown "$Myname" |sed 's/bash/C/' >README
+   tmp=$(mktemp -d -t "$Myname-1.XXXXXXXXXX")
    echo "$source" >"$tmp/$Myname.c"
    echo "$makefile" >"$tmp/Makefile"
    cd "$tmp" || die "Could not cd to $tmp"
    make --quiet
-   mv -f $Myname /local/bin
+   mv -f "$Myname" /local/bin
    cd ..
    rm -r "$tmp"
    exit 
@@ -133,7 +135,7 @@ char temp[80];
 int comp_nr=0; /* counts compositions (just for printing references in the tables) */
 
 void helpsrt() {
-   system("anacal -H|sed -ns '/^= Syno/,/^= Desc/p'|sed '/^=/d'");
+   system("$Myname -H|sed -ns '/^= Syno/,/^= Desc/p'|sed '/^=/d'");
    exit(0);
 }
 
@@ -512,14 +514,15 @@ L6:
 SOURCE
 )
 
-if [[ $(type -t showxtermcolors) != function ]]; then
-   echo "$Myname needs wdbashfunctions to be sourced in your ~/.bashrc"
-   echo "get those with:"
+test "$(type -t helpsrt)" = builtin || source wdbashfunctions 2>/dev/null || {
+   echo -e "${0##*/} needs wdbashfunctions\n" \
+        "get those with: wget http://www.dekkerdocumenten.nl/unix/wdbashfunctions,\n" \
+        "and put the script in your PATH or source it in your ~/.bashrc"
    exit 1
-fi
+}
 
 if ! options=$(getopt \
-   -n $Myname \
+   -n "$Myname" \
    -o IhHV \
    -- "$@"
 ); then exit 1; fi
