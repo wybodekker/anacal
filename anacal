@@ -1,6 +1,6 @@
 #!/bin/bash
 
- Version=1.02
+ Version=1.03
   Myname="${0##*/}"
 
 read -r -d '' doc \
@@ -56,6 +56,13 @@ Sample input file (case sensitive):
 = Copyright
 Released under the [GNU General Public License](www.gnu.org/copyleft/gpl.html)
 DOC
+
+test "$(type -t helpsrt)" = builtin || source wdbashfunctions 2>/dev/null || {
+   echo -e "${0##*/} needs wdbashfunctions\n" \
+        "get those with: wget http://www.dekkerdocumenten.nl/unix/wdbashfunctions,\n" \
+        "and put the script in your PATH or source it in your ~/.bashrc"
+   exit 1
+}
 
 # need this construct to get full doc inside ELF-executable (see helpall function):
 doc="\n$(sed 's/$/\\n\\/;$s/\\$//' <<<"$doc")"
@@ -513,13 +520,6 @@ L6:
 }
 SOURCE
 )
-
-test "$(type -t helpsrt)" = builtin || source wdbashfunctions 2>/dev/null || {
-   echo -e "${0##*/} needs wdbashfunctions\n" \
-        "get those with: wget http://www.dekkerdocumenten.nl/unix/wdbashfunctions,\n" \
-        "and put the script in your PATH or source it in your ~/.bashrc"
-   exit 1
-}
 
 if ! options=$(getopt \
    -n "$Myname" \
