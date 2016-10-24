@@ -57,7 +57,7 @@ Sample input file (case sensitive):
 Released under the [GNU General Public License](www.gnu.org/copyleft/gpl.html)
 DOC
 
-test "$(type -t helpsrt)" = builtin || source wdbashfunctions 2>/dev/null || {
+test "$(type -t helpsrt)" = function || source wdbashfunctions 2>/dev/null || {
    echo -e "${0##*/} needs wdbashfunctions\n" \
         "get those with: wget http://www.dekkerdocumenten.nl/unix/wdbashfunctions,\n" \
         "and put the script in your PATH or source it in your ~/.bashrc"
