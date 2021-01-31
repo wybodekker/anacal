@@ -1,0 +1,337 @@
+#!/bin/bash
+
+ Version=0.00
+  Myname="${0##*/}"
+
+:<<'DOC'
+= anacal - find chemical composition from elemental analysis results
+
+= Synopsis
+anacal [options] file[.ea] [max_dev]	
+
+== Options for the C executable
+-h	prints this help and exit
+-H	prints full documentation and exit
+-V	print version and exit
+-s	use the short format
+-w	in the short format, report weight instead of mole fractions
+
+== Options for the Bash install script
+-h	prints this help and exit
+-H	prints full documentation and exit
+-V	print version and exit
+-I	(bash script only) install the C-executable
+
+= Description
+Given, for a chemical composition:
+- the elemental percentages for (some of the) elements and
+- a set of bruto formulae, one for each possible component 
+anacal calculates compositions with one or more of the formulas
+resulting in a good (that is: better than a certain standard deviation) fit
+between calculated and experimental element percentages. 
+
+Input is taken from |file.ea|, output is written to |stdout|.
+The extension .ea is automatically appended to the input file.
+
+Run without parameters for help.
+
+= Input
+The input file should have the following structure (numbers are line
+numbers):
+1	a title line
+2	elementsymbol followed by percentage for each element determined
+3+	bruto formula's of the possible components, one per line;
+	comments may be added with the #-character;
+	remaining characters up to end-of-line are skipped.
+
+Sample input file (case sensitive):
+
+   Citric acid
+   C35.90 H4.74 O59.69
+   C6 H8 O7 # Citric acid
+   H2 O     # Water
+
+= Dependencies
+This bash script contains the source for the C executable, which can be
+installed by running the script with the |-I| option. You need to set the
+environment variable |PREFIX| so that it contains a subdirectory |bin|,
+where the executable will be installed.
+
+= Author
+[Wybo Dekker](wybo@dekkerdocumenten.nl).
+This program uses routines |ludcmp| and |lubksb| taken from
+[Numerical Recipes](numerical.recipes)
+
+= Copyright
+Released under the [GNU General Public License](www.gnu.org/copyleft/gpl.html)
+DOC
+
+REd='\e[38;5;9m' Mag='\e[38;5;5m' Nor='\e[0m'
+    die() { local i; for i; do echo -e "$Myname: $REd$i$Nor"; done 1>&2; exit 1; }
+   Warn() { local i; for i; do echo -e "$Myname: $Mag$i$Nor"; done 1>&2; }
+ helpsrt() { sed -n '/^= Synopsis/,/^= /p' "$0"|sed '1d;$d'; exit; }
+helpall() { sed -n "/^:<<'DOC'$/,/^DOC/p" "$0"|sed '1d;$d'|
+            less -P"$Myname-${Version/./·} (press h for help, q to quit)";exit; }
+
+:<<'DOC' #---------------------------------------------------------------------
+= excheck
+synopsis:	 excheck executable1 [executable2...]
+description:	check if all needed execs are there and getopt is GNU
+DOC
+#-------------------------------------------------------------------------------
+excheck() {
+   local ok=true i
+   ((BASH_VERSINFO>=4)) || die "Need bash version >= 4"
+   for i; do 
+      command -v "$i" > /dev/null && continue
+      Warn "Missing executable: $i"
+      ok=false
+   done
+   $ok || die
+   getopt -T 
+   [[ $? -ne 4 ]] && die "Your getopt is not GNU"
+}
+
+:<<'DOC' #----------------------------------------------------------------------
+= installme
+description:	Compiles the C source contained by this script
+globals used:	 Myname Version doc source
+DOC
+#-------------------------------------------------------------------------------
+installme() { 
+   local bin="$PREFIX/bin"
+   local target="$bin/$Myname"
+   [[ -n $PREFIX ]] || die "You need to define you environment variable PREFIX"
+   test -d "$bin" || die "Directory $bin does not exist"
+   test -w "$bin" || die "Directory $bin is not writable by you"
+   # if the C source exists, it has apparently been edited, and needs to be
+   # replaced in the uuencoded part of the script:
+   if [[ -e $Myname.c ]]; then
+      # remove uuencoded anacal.c from anacal:
+        grep -q "^begin-base64" anacal &&
+        sed -n -i '1,/^begin-base64/ { /^begin-base64/d;p }' anacal
+      # append anacal.c to anacal:
+        zip -Drmq - anacal.c | uuencode -m - >> anacal
+      # end the here doc:
+      echo SOURCE >> anacal
+   fi
+   # The main documentation of the script is needed to be put in the C source,
+   # so isolate it in a temporary file 
+   tmp=$(mktemp -t "$Myname-XXXXXXXXXX.doc")
+   sed -n "/^= $Myname/,/^DOC/ { /^DOC/d;p }" "$Myname" |
+     awk '{print $0}' ORS='\\n' > "$tmp"
+     echo "\\" >> "$tmp"
+   uudecode anacal |
+	zcat |
+	sed -e "s/VERSION/$Version/" -e "/^GENDOC/{r $tmp" -e 'd}' |
+	cc -lm -xc -o"$target" -
+   Warn "created executable $target"
+   # create the docs - but not everybody has the tools for this:
+   if command -v gendoc &>/dev/null; then
+      gendoc "$target"   # generate the docs
+      scriptinfo -m "$target" > README.md
+   fi
+}
+
+:<<'DOC' #----------------------------------------------------------------------
+= handle_options
+synopsis:	 handle_options "$@"
+description:	handle the options.
+globals used:	 Myname Version
+globals  set:	 args
+DOC
+#-------------------------------------------------------------------------------
+handle_options() {
+   local options
+      options=$(getopt \
+      -n "$Myname" \
+      -o IhHV \
+      -- "$@"
+   ) || exit 1
+   eval set -- "$options"
+   while true; do
+      case $1 in
+      (-I)  installme
+	    exit
+	    ;;
+      (-V)  echo $Version
+	    exit
+	    ;;
+      (-h)  helpsrt
+	    ;;
+      (-H)  helpall
+	    ;;
+      (--)  shift
+	    break
+	    ;;
+      (*)   break
+	    ;;
+      esac
+   done
+   args=("$@")
+}
+
+excheck getopt uuencode uudecode make cc
+handle_options "$@"
+set -- "${args[@]}"
+(( $# == 0 )) || Warn "I don't expect arguments!"
+helpsrt
+
+:<<'SOURCE'
+
+The code below contains, zipped and uuencoded, anacal.c. On running
+anacal -I, anacal.c is created in a temporary directory in /tmp.
+If you need to edit anacal.c, you'll need isolate it from the code below.
+You can isolate it with:
+
+   uudecode anacal |zcat > anacal.c
+
+After the edit, if you leave it with the name anacal.c, then running 
+
+   anacal -I
+
+wil detect it and put it back in the script and remove it.
+
+begin-base64 644 -
+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
+====
+SOURCE
