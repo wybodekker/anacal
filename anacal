@@ -129,7 +129,7 @@ installme() {
    # create the docs - but not everybody has the tools for this:
    if command -v gendoc &>/dev/null; then
       gendoc "$target"   # generate the docs
-      scriptinfo -m "$target" > README.md
+      scriptinfo -m "$target" | sed 's/bash/C/' > README.md
    fi
 }
 

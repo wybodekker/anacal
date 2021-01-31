@@ -2,7 +2,7 @@
 |     key | description
 |     ---:|:---
 |  script | anacal - find chemical composition from elemental analysis results
-|    type | bash
+|    type | C
 |  author | Wybo Dekker
 |   email | wybo@dekkerdocumenten.nl
 | version | 0.00
