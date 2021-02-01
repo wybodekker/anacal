@@ -107,13 +107,13 @@ installme() {
    # if the C source exists, it has apparently been edited, and needs to be
    # replaced in the uuencoded part of the script:
    if [[ -e $Myname.c ]]; then
-      # remove uuencoded anacal.c from anacal:
-        grep -q "^begin-base64" anacal &&
-        sed -n -i '1,/^begin-base64/ { /^begin-base64/d;p }' anacal
-      # append anacal.c to anacal:
-        zip -Drmq - anacal.c | uuencode -m - >> anacal
+      # remove uuencoded Myname.c from the Myname script:
+        grep -q "^begin-base64" "$Myname" &&
+        sed -n -i '1,/^begin-base64/ { /^begin-base64/d;p }' "$Myname"
+      # append Myname.c to the Myname script:
+        zip -Drmq - "$Myname.c" | uuencode -m - >> "$Myname"
       # end the here doc:
-      echo SOURCE >> anacal
+      echo SOURCE >> "$Myname"
    fi
    # The main documentation of the script is needed to be put in the C source,
    # so isolate it in a temporary file 
@@ -121,7 +121,7 @@ installme() {
    sed -n "/^= $Myname/,/^DOC/ { /^DOC/d;p }" "$Myname" |
      awk '{print $0}' ORS='\\n' > "$tmp"
      echo "\\" >> "$tmp"
-   uudecode anacal |
+   uudecode "$Myname" |
 	zcat |
 	sed -e "s/VERSION/$Version/" -e "/^GENDOC/{r $tmp" -e 'd}' |
 	cc -lm -xc -o"$target" -
@@ -180,7 +180,7 @@ helpsrt
 :<<'SOURCE'
 
 The code below contains, zipped and uuencoded, anacal.c. On running
-anacal -I, anacal.c is created in a temporary directory in /tmp.
+./anacal -I, anacal.c is produced and compiled on-the-fly.
 If you need to edit anacal.c, you'll need isolate it from the code below.
 You can isolate it with:
 
@@ -190,7 +190,7 @@ After the edit, if you leave it with the name anacal.c, then running
 
    anacal -I
 
-wil detect it and put it back in the script and remove it.
+wil detect it, put it back in the script, and remove it, before installing.
 
 begin-base64 644 -
 UEsDBBQACAAIAPKzP1IAAAAAAAAAAIZCAAAIABwAYW5hY2FsLmNVVAkAA7gh
