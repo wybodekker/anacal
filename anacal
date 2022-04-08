@@ -154,20 +154,22 @@ docolor() {
    done
 }
 
+[[ -n $PREFIX ]] || die "envvar PREFIX is empty, must point to install dir"
+[[ -w $PREFIX ]] || die "$PREFIX is not writable"
 docolor
 
 instscr() { 
-   rm -f "/local/bin/$Myname"
-   cp "$0" "/local/bin/$Myname"
-   chmod 755 "/local/bin/$Myname"
+   rm -f "$PREFIX/bin/$Myname"
+   cp "$0" "$PREFIX/bin/$Myname"
+   chmod 755 "$PREFIX/bin/$Myname"
    gendoc "$Myname"
    gendoc -m "$Myname"
    scriptinfo --markdown "$Myname" |sed 's/bash/C/' >README
    touch "$0".c
    make --quiet
    make --quiet clean
-   mv "/local/bin/$Myname" anacal.script
-   mv -f "$Myname" /local/bin
+   mv "$PREFIX/bin/$Myname" anacal.script
+   mv -f "$Myname" $PREFIX/bin
    mv anacal.script anacal
    cd ..
    exit 

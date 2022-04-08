@@ -1,11 +1,12 @@
-|
--------:|:--------------------------------------
- script:| anacal - calculation of chemical composition from elemental analysis results
-   type:| C
- author:| Wybo Dekker
-  email:| wybo@dekkerdocumenten.nl
-version:| 1.03
-license:| GNU General Public License
+# anacal
+|     key | description
+|     ---:|:---
+|  script | anacal - calculation of chemical composition from elemental analysis results
+|    type | C
+|  author | Wybo Dekker
+|   email | wybo@dekkerdocumenten.nl
+| version | 1.04
+| license | GNU General Public License
 
 Given, for a chemical composition:
 - the elemental percentages for (some of the) elements and
@@ -13,4 +14,3 @@ Given, for a chemical composition:
 anacal calculates compositions with one or more of the formula's
 resulting in a good (that is: better than a certain standard deviation) fit
 between calculated and experimental element percentages.
-
