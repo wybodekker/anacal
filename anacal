@@ -1,27 +1,38 @@
 #!/bin/bash
 
- Version=1.04
+ Version=1.05
   Myname="${0##*/}"
 
 :<<'DOC'
-= anacal - calculation of chemical composition from elemental analysis results
+= anacal - find chemical composition from elemental analysis results
 
 = Synopsis
 anacal [options] file[.ea] [max_dev]	
 
 == Options
--s	use the short format
--w	in the short format, report weight instead of mole fractions
--h	prints this help
--H	prints full documentation
+-I|--install	install
+-c|--clean	clean up after swallowing edited internals and exit
+-h|--help	show this help and exit
+-H|--Help	show full help and exit
+-V|--version	show version and exit
 
 = Description
+This script, with the |--install| option, compiles and installs a binary
+anacal in |$PREFIX/bin|, with documentation in |$PREFIX/{man,pdf,html}|.
+To this end, it creates |anacal.c|, |Makefile|, |README.md| and a directory
+|tests| with input files for testing. These can be removed by calling the
+script with the |--clean| option. Any changes in the files will be stored
+back in the script. So if you have applied any changes, run me with the
+|-c| option, and then with the |-I| option to install the changes.
+
+About the installed binary anacal:
 Given, for a chemical composition:
 - the elemental percentages for (some of the) elements and
 - a set of bruto formulae, one for each possible component 
-anacal calculates compositions with one or more of the formula's
-resulting in a good (that is: better than a certain standard deviation) fit
-between calculated and experimental element percentages. 
+anacal calculates compositions for all combinations of the candidate
+molecular formulas and reports the combinations for which the average
+deviation between calculated and measured element percentages is better
+than the value given by the second argument, 1% by befault.
 
 Input is taken from |file.ea|, output is written to |stdout|.
 The extension .ea is automatically appended to the input file.
@@ -56,139 +67,197 @@ Sample input file (case sensitive):
 Released under the [GNU General Public License](www.gnu.org/copyleft/gpl.html)
 DOC
 
-# used and created on-the-fly - declare for shellcheck: 
-REd=''
-
-    die() { local i; for i; do Bla "$Myname: $REd$i"; done 1>&2; exit 1; }
+REd='\e[38;5;1m' Nor='\e[0m'
+    die() { local i; for i; do echo -e "$Myname: $REd$i$Nor"; done 1>&2; exit 1; }
 helpsrt() { sed -n '/^= Synopsis/,/^= /p' "$0"|sed '1d;$d'; exit; }
-
-# shellcheck disable=SC2154
-helpall() { sed -n "/^:<<'DOC'$/,/^DOC/p" "$0"|sed -n '1d;$d;p'|
-            less -Ps"$Myname-${Version/./·} documentation - type h for help, q to quit."
-		exit
-	  }
-
-_colnames=(Bla Red Gre Yel Blu Mag Cya Whi)
-:<<'DOC' #------ function _setxtcolor --------------------------------------------
-= _setxtcolor
-parameters	1 index in _colnames array
-		2 true for light false for dark variant
-		3 true for bold false for normal variant
-description	Explanation by example:
-		Creates a variable Red, which contains the ANSI-code for red.
-		Also creates variables REd for light red, ReD for bold red, and 
-		RED for light bold red.
-		Finally, also creates functions with the same names, which print
-		their arguments, each on a new line, in the corresponding color. 
-		If these functions have three arguments, and the first is 'on',
-		the second argument is interpreted as the color for the background.
-		So |YEL on Blu string| print the string in light bold yellow on a 
-		blue background. Of course, bold has no meaning for a background
-		color, therefore a capitalized third letter in a background color
-		is translated to blinking.
-		Examples:
-		  Red -> red
-		  REd -> light red
-		  RED -> light bold red
-		  Red on Yel -> red on yellow
-		  Red on YEl -> red on light yellow
-		  Red on YEL -> blinking red on light yellow
-		  RED on YeL -> blinking light bold red on yellow
-globals  set:	  base dir ext 
-globals used:	  IFS PWD altdir
-returns:	0 on succes, 1 otherwise
-DOC
-#-------------------------------------------------------------------------------
-_setxtcolor(){ # color (0-7), light, bold
-   local name=${_colnames[$1]} l=$1 b='' foo
-   if $2; then name=$(foo=${name:1};echo "${name:0:1}${foo^}"); (( l+=8 )); fi
-   if $3; then name=$(foo=${name:2};echo "${name:0:2}${foo^}"); b='1;'; fi
-   eval "$name() {
-     local on='' i
-     if [[ \$1 == on ]]; then
-        eval on=\\\$\$2
-        on=\${on/38/48}
-        on=\${on/1;48/5;48}
-        shift 2
-     fi
-     for i; do 
-        printf \"\$$name\$on %s[0m\\n\" \"\$i\"
-     done
-   }
-   $name=\"[${b}38;5;${l}m\";"
-}
-
-:<<'DOC' #------ function nocolor --------------------------------------------
-= nocolor
-parameters:	-
-description:	Unsets any variable created by |docolor|
-globals  set:	All variables in array colnames + upper case variants
-globals used:	  _colnames
-returns:	0
-DOC
-#-------------------------------------------------------------------------------
-nocolor() { local i p q r
-   for i in "${_colnames[@]}"; do
-      p=${i:0:1} q=${i:1:1} r=${i:2:1}
-      eval "$i='' $p${q^}$r='' $p$q${r^}='' $p${q^}${r^}=''" 
-   done
-}
-
-:<<'DOC' #------ function docolor --------------------------------------------
-= docolor
-parameters:	-
-description:	Create color variabels and functions
-globals  set:	All variables in array colnames + upper case variants
-globals used:	-
-returns:	0
-DOC
-#-------------------------------------------------------------------------------
-docolor() {
-   local l b c
-   for l in false true; do
-      for b in false true; do
-         for c in {0..7}; do
-            _setxtcolor $c $l $b
-         done
-      done
-   done
-}
+helpall() { sed -n "/^:<<'DOC'$/,/^DOC/p" "$0"|sed '1d;$d'|
+            less -P"$Myname-${Version/./·} (press h for help, q to quit)";exit; }
 
 [[ -n $PREFIX ]] || die "envvar PREFIX is empty, must point to install dir"
 [[ -w $PREFIX ]] || die "$PREFIX is not writable"
-docolor
 
 instscr() { 
-   rm -f "$PREFIX/bin/$Myname"
-   cp "$0" "$PREFIX/bin/$Myname"
-   chmod 755 "$PREFIX/bin/$Myname"
-   gendoc "$Myname"
-   gendoc -m "$Myname"
-   scriptinfo --markdown "$Myname" |sed 's/bash/C/' >README
-   touch "$0".c
-   make --quiet
-   make --quiet clean
-   mv "$PREFIX/bin/$Myname" anacal.script
-   mv -f "$Myname" $PREFIX/bin
-   mv anacal.script anacal
-   cd ..
+   rm -f "$PREFIX/bin/$Myname"		# remove the binary
+   cp -a "$0" "$PREFIX/bin/$Myname"	# replace it with myself
+   gendoc "$Myname"			# generate all docs in the right dirs
+   scriptinfo --markdown "$Myname" |	# generate README.md
+      sed 's/bash/C/' >README.md	# but replace bash with C
+   # generate anacal.c, the Makefile and the tests from my self:
+   uudecode "$0" |tar xzf -
+   make --quiet		# make the executable in $PREFIX/bin
+   make --quiet clean	# and cleanup
    exit 
+}
+
+# cleanup, but swallow internal files (they may have been edited).
+clean() {
+   local i
+   # test if the expected files are there;
+   for i in Makefile anacal.c tests; do
+      test -e $i || die "$i not found, $0 unchanged"
+   done
+   # replace:
+   sed -i "/^:<<'auxfiles'/,/^auxfiles/d" "$0" && (
+     echo ":<<'auxfiles'"
+     tar czf - Makefile anacal.c tests | uuencode -
+     echo auxfiles
+   ) >> "$0"
+   # and remove
+   rm -r Makefile anacal.c tests
+   exit
 }
 
 if ! options=$(getopt \
    -n "$Myname" \
-   -o IhHV \
+   -o IhHVc \
+   -l install,help,Help,version,clean \
    -- "$@"
 ); then exit 1; fi
 eval set -- "$options"
 while [ $# -gt 0 ]; do
    case $1 in
-   (-I)  instscr;;
-   (-V)  echo $Version; exit;;
-   (-h)  helpsrt;;
-   (-H)  helpall;;
+   (-I|--install)	# install
+       instscr
+       ;;
+   (-c|--clean)		# clean up after swallowing edited internals and exit
+       clean
+       ;;
+   (-h|--help)	# show this help and exit
+       helpsrt
+       ;;
+   (-H|--Help)		# show full help and exit
+       helpall
+       ;;
+   (-V|--version)	# show version and exit
+       echo $Version
+       exit
+       ;;
    (--)  shift;  break;;
    (*)	         break;;
    esac
 done
+helpsrt
 
+:<<'auxfiles'
+begin 644 -
+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
+;1V_U8WMLC^VQ/;;']M@>&[7_!J_G!"@`4```
+`
+end
+auxfiles
