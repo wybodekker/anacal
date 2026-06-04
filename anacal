@@ -9,12 +9,12 @@
 = Synopsis
 anacal [options] file[.ea] [max_dev]	
 
-== Options
--I|--install	install
--c|--clean	clean up after swallowing edited internals and exit
--h|--help	show this help and exit
--H|--Help	show full help and exit
--V|--version	show version and exit
+= Options
+-I,--install	install
+-c,--clean	clean up after swallowing edited internals and exit
+-h,--help	show this help and exit
+-H,--Help	show full help and exit
+-V,--version	show version and exit
 
 = Description
 This script, with the |--install| option, compiles and installs a binary
@@ -67,11 +67,12 @@ Sample input file (case sensitive):
 Released under the [GNU General Public License](www.gnu.org/copyleft/gpl.html)
 DOC
 
-REd='\e[38;5;1m' Nor='\e[0m'
-    die() { local i; for i; do echo -e "$Myname: $REd$i$Nor"; done 1>&2; exit 1; }
-helpsrt() { sed -n '/^= Synopsis/,/^= /p' "$0"|sed '1d;$d'; exit; }
-helpall() { sed -n "/^:<<'DOC'$/,/^DOC/p" "$0"|sed '1d;$d'|
-            less -P"$Myname-${Version/./·} (press h for help, q to quit)";exit; }
+# --- colors, help from embedded doc, die ---------------------------------
+Red=$'\e[1;31m'
+nv="$Myname-${Version/./\\.} (press h for help, q to quit)"
+helpsrt() { sed -n '/^= Synopsis/,/^= Desc/p' "$0"|sed '1d;$d'; exit; } 
+helpall() { sed -n "/^:<<'DOC'$/,/^DOC/p" "$0"|sed '1d;$d'| less -P"$nv"; exit; }
+    die() { printf "%s\e[0m\n" "${@/#/$Myname: $Red}" >&2; exit 1; }
 
 [[ -n $PREFIX ]] || die "envvar PREFIX is empty, must point to install dir"
 [[ -w $PREFIX ]] || die "$PREFIX is not writable"
@@ -258,4 +259,6 @@ M"?R,]QX?G6CL:!;$,;XW>QM`81'/XD!`[N./2-C1R<`\.NG"1_?L!$;VT=6@
 MBQER'.HX_3TZ.:.O!;2.CNE>Z+,<^(F$W0A\)D%'`G2P%?3D[#>ZPC][JS<V
 M;O_&GVK_^LA8C__Z@_W_$0WWOWXT?-)["F8+'V"7HQY8O@&%//2?C(X"T//!
 ?V?].[7UH#^VA/;2']M`>VD-[:+^U_0^80#4^`%``````
+`
+end
 auxfiles
