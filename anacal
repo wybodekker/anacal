@@ -104,7 +104,7 @@ clean() {
      echo auxfiles
    ) >> "$0"
    # and remove
-   rm -r Makefile anacal.c tests README.md
+   rm -r Makefile anacal.c tests
    exit
 }
 
