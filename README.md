@@ -14,10 +14,10 @@ find chemical composition from elemental analysis results
 | version:|1.07|
 | license:|GNU General Public License|
 |   intro:|This script, with the **--install** option, compiles|
-|         |and installs a binary anacal in **$PREFIX/bin**, with|
-|         |documentation in **$PREFIX/{man,pdf,html}**.  To this end,|
-|         |it creates **anacal.c**, **Makefile**, **README.md** and a|
-|         |directory **tests** with input files for testing. These|
+|         |and installs a binary anacal in **/usr/local/bin**, with|
+|         |documentation in **/usr/local/{man,pdf,html}**.  To this|
+|         |end, it creates **anacal.c**, **Makefile**, **README.md** and|
+|         |a directory **tests** with input files for testing. These|
 |         |can be removed by calling the script with the **--clean**|
 |         |option. Any changes in the files will be stored back in|
 |         |the script. So if you have applied any changes, run me|

@@ -18,7 +18,7 @@ anacal [options] file[.ea] [max_dev]
 
 = Description
 This script, with the |--install| option, compiles and installs a binary
-anacal in |$PREFIX/bin|, with documentation in |$PREFIX/{man,pdf,html}|.
+anacal in |/usr/local/bin|, with documentation in |/usr/local/{man,pdf,html}|.
 To this end, it creates |anacal.c|, |Makefile|, |README.md| and a directory
 |tests| with input files for testing. These can be removed by calling the
 script with the |--clean| option. Any changes in the files will be stored
@@ -74,18 +74,17 @@ helpsrt() { sed -n '/^= Synopsis/,/^= Desc/p' "$0"|sed '1d;$d'; exit; }
 helpall() { sed -n "/^:<<'DOC'$/,/^DOC/p" "$0"|sed '1d;$d'| less -P"$nv"; exit; }
     die() { printf "%s\e[0m\n" "${@/#/$Myname: $Red}" >&2; exit 1; }
 
-[[ -n $PREFIX ]] || die "envvar PREFIX is empty, must point to install dir"
-[[ -w $PREFIX ]] || die "$PREFIX is not writable"
+[[ -w /usr/local ]] || die "/usr/local is not writable"
 
 instscr() { 
-   rm -f "$PREFIX/bin/$Myname"		# remove the binary
-   cp -a "$0" "$PREFIX/bin/$Myname"	# replace it with myself
+   rm -f "/usr/local/bin/$Myname"		# remove the binary
+   cp -a "$0" "/usr/local/bin/$Myname"	# replace it with myself
    gendoc "$Myname"			# generate all docs in the right dirs
    scriptinfo --markdown "$Myname" |	# generate README.md
       sed 's/bash/C/' >README.md	# but replace bash with C
    # generate anacal.c, the Makefile and the tests from my self:
    uudecode "$0" |tar xzf -
-   make --quiet		# make the executable in $PREFIX/bin
+   make --quiet		# make the executable in /usr/local/bin
    make --quiet clean	# and cleanup
    exit 
 }
